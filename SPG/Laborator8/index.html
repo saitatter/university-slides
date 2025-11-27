@@ -2,18 +2,102 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <title>Prezentare Reveal + p5.js</title>
+
+  <!-- Reveal.js core -->
   <link rel="stylesheet" href="https://unpkg.com/reveal.js/dist/reveal.css">
   <link rel="stylesheet" href="https://unpkg.com/reveal.js/dist/theme/black.css">
+
+  <style>
+    /* Centrare pentru slide-ul p5.js */
+    #p5-container {
+      width: 600px;
+      height: 400px;
+      margin: auto;
+      border: 2px solid #fff;
+    }
+  </style>
 </head>
 <body>
+
 <div class="reveal">
   <div class="slides">
+
+    <!-- Slide 1 -->
     <section>
       <h1>Prezentare 1</h1>
+      <p>Exemplu cu multiple slide-uri</p>
     </section>
+
+    <!-- Slide 2 -->
+    <section>
+      <h2>Slide secundar</h2>
+      <p>Aici poți adăuga conținut normal HTML.</p>
+    </section>
+
+    <!-- Slide 3 - P5.js -->
+    <section>
+      <h2>Demo p5.js</h2>
+      <div id="p5-container"></div>
+
+
+    </section>
+
+    <!-- Slide 4 -->
+    <section>
+      <h2>Final</h2>
+      <p>Acesta e finalul prezentării.</p>
+    </section>
+
   </div>
 </div>
+
+<!-- Reveal.js -->
 <script src="https://unpkg.com/reveal.js/dist/reveal.js"></script>
-<script>Reveal.initialize();</script>
+
+<!-- p5.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+    <script>
+    let myP5Instance = null;
+
+    function startP5() {
+        function sketch(p) {
+        let x = 0;
+
+        p.setup = function () {
+            const canvas = p.createCanvas(600, 400);
+            canvas.parent("p5-container");
+        };
+
+        p.draw = function () {
+            p.background(30);
+            p.fill(255, 0, 120);
+            p.noStroke();
+            p.ellipse(x, 200, 50, 50);
+
+            x += 2;
+            if (x > p.width) x = 0;
+        };
+        }
+
+        myP5Instance = new p5(sketch, document.getElementById("p5-container"));
+    }
+
+    // Pornim p5 doar când intrăm pe slide-ul cu p5.js
+    Reveal.on('slidechanged', (event) => {
+        const current = event.currentSlide;
+        if (current.querySelector('#p5-container')) {
+        if (!myP5Instance) startP5();
+        }
+    });
+    </script>
+    
+<script>
+  Reveal.initialize({
+    hash: true
+  });
+</script>
+
 </body>
 </html>
