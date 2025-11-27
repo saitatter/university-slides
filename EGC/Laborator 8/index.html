@@ -105,9 +105,11 @@
         <!-- Slide 3 -->
         <section>
           <h2>Formula completă</h2>
-          \[ C = K_e + I_a K_a + \sum_i \left[ f_{a_i} I_{s_i} \left( K_d \max(N
-          \cdot L_i, 0) + K_s \, \text{lum}_i \left( \max(N \cdot H_i, 0)^n
-          \right) \right) \right] \]
+          <p style="font-size: 0.7em">
+            \[ C = K_e + I_a K_a + \sum_i \Big[ f_{a_i} I_{s_i} \Big( K_d
+            \max(\mathbf{N} \cdot \mathbf{L}_i, 0) + K_s \,\text{lum}_i \big(
+            \max(\mathbf{N} \cdot \mathbf{H}_i, 0)^n \big) \Big) \Big] \]
+          </p>
           <ul>
             <li>Ia, Is_i – intensități RGB</li>
             <li>Ke, Ka, Kd, Ks – materiale (RGB)</li>
@@ -312,10 +314,11 @@ vec3 point_light_contribution(vec3 pos, vec3 color);
 
         <!-- Slide BONUS -->
         <section>
-          <h2>Bonus: Spot-light &amp; HSV (Hue)</h2>
+          <h2>Bonus – Spot-light &amp; HSV</h2>
           <p style="font-size: 0.8em">
-            Spot-light care "proiectează" un cerc Hue (model HSV) pe podea –
-            fiecare direcție corespunde unei nuanțe.
+            Spot-light care iluminează un disc HSV (Hue) folosind formula
+            <code>spot = dot(-L, light_dir)</code> și atenuare în funcție de
+            distanța față de centru.
           </p>
           <div id="p5-hsv-spotlight" style="width: 600px; height: 400px"></div>
         </section>

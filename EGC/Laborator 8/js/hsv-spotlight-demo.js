@@ -8,32 +8,142 @@ function startHSVSpotlightDemo() {
   hsvSpotlightInstance = new p5((p) => {
     const W = 600;
     const H = 400;
+    const PLANE_SIZE = 400;
+
+    let theShader;
 
     // cameră orbită simplă
-    let camYaw = 0.4;
+    let camYaw = 0.5;
     let camPitch = 0.35;
-    const camDist = 600;
+    const camDist = 650;
     let isRotating = false;
     let lastMouseX = 0;
     let lastMouseY = 0;
 
-    // spotlight position & direction
-    let spotPos;
-    let dir; // spre podea
+    // spotlight în spațiul planului (XY, plan la z=0)
+    const lightLocal = { x: 0.0, y: 120.0, z: 200.0 }; // deasupra planului
+    const cutoffDeg = 30.0;
+
+    p.preload = function () {
+      const vertSrc = `
+        precision mediump float;
+
+        attribute vec3 aPosition;
+
+        uniform mat4 uModelViewMatrix;
+        uniform mat4 uProjectionMatrix;
+
+        // poziția locală a vârfului (înainte de MV/P)
+        varying vec3 vLocalPos;
+
+        void main() {
+          vLocalPos = aPosition;
+          gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aPosition, 1.0);
+        }
+      `;
+
+      const fragSrc = `
+        precision mediump float;
+
+        varying vec3 vLocalPos;
+
+        uniform vec3 uLightPos;   // poziția luminii în spațiul planului
+        uniform float uCutoffRad; // unghiul de cutoff (radiani)
+        uniform float uRadius;    // raza discului HSV
+
+        // HSV (0-360,0-1,0-1) -> RGB (0-1)
+        vec3 hsv2rgb(float h, float s, float v) {
+          h = mod(h, 360.0);
+          float c = v * s;
+          float x = c * (1.0 - abs(mod(h / 60.0, 2.0) - 1.0));
+          float m = v - c;
+
+          vec3 rgb;
+
+          if (h < 60.0) {
+            rgb = vec3(c, x, 0.0);
+          } else if (h < 120.0) {
+            rgb = vec3(x, c, 0.0);
+          } else if (h < 180.0) {
+            rgb = vec3(0.0, c, x);
+          } else if (h < 240.0) {
+            rgb = vec3(0.0, x, c);
+          } else if (h < 300.0) {
+            rgb = vec3(x, 0.0, c);
+          } else {
+            rgb = vec3(c, 0.0, x);
+          }
+
+          return rgb + vec3(m);
+        }
+
+        void main() {
+          // planul este în XY, la z=0
+          vec2 pos = vLocalPos.xy;
+          float distFromCenter = length(pos);
+
+          // în afara discului HSV
+          if (distFromCenter > uRadius) {
+            gl_FragColor = vec4(0.02, 0.02, 0.04, 1.0);
+            return;
+          }
+
+          // poziția fragmentului în spațiul planului
+          vec3 fragPos = vec3(pos.x, pos.y, 0.0);
+
+          // vector de la lumină la fragment
+          vec3 L = normalize(fragPos - uLightPos);
+
+          // direcția axei spotului: în jos spre plan ( -Z )
+          vec3 lightDir = normalize(vec3(0.0, 0.0, -1.0));
+
+          // spotlight: spot = dot(-L, light_dir)
+          float spot = dot(-L, lightDir);
+          float cosCut = cos(uCutoffRad);
+
+          float angularAtt = 0.0;
+          if (spot > cosCut) {
+            // atenuare unghiulară smooth
+            float t = (spot - cosCut) / (1.0 - cosCut);
+            t = clamp(t, 0.0, 1.0);
+            angularAtt = t * t;
+          }
+
+          // atenuare radială față de centru (discul HSV)
+          float radial = 1.0 - distFromCenter / uRadius;
+          float radialAtt = clamp(radial, 0.0, 1.0);
+
+          float intensity = angularAtt * radialAtt;
+
+          if (intensity <= 0.0005) {
+            gl_FragColor = vec4(0.02, 0.02, 0.04, 1.0);
+            return;
+          }
+
+          // Hue = unghiul poziției față de centru (cercul HSV)
+          float angle = atan(pos.y, pos.x); // [-PI, PI]
+          float hue = degrees(angle);
+          if (hue < 0.0) hue += 360.0;
+
+          float sat = 1.0;
+          float val = intensity; // brightness = intensitatea spotului
+
+          vec3 rgb = hsv2rgb(hue, sat, val);
+          gl_FragColor = vec4(rgb, 1.0);
+        }
+      `;
+
+      theShader = p.createShader(vertSrc, fragSrc);
+    };
 
     p.setup = function () {
       const canvas = p.createCanvas(W, H, p.WEBGL);
       canvas.parent("p5-hsv-spotlight");
       p.noStroke();
-
-      spotPos = p.createVector(0, 200, 200); // un pic în față și sus
-      dir = p.createVector(0, -1, -0.4).normalize();
-
-      // dezactivăm contextmenu doar pe canvas
-      canvas.elt.oncontextmenu = () => false;
+      canvas.elt.oncontextmenu = () => false; // disable RMB menu
     };
 
-    // cameră orbită cu click dreapta
+    // orbit camera cu RMB drag
     p.mousePressed = function () {
       if (p.mouseButton === p.RIGHT) {
         isRotating = true;
@@ -65,109 +175,78 @@ function startHSVSpotlightDemo() {
       const cosP = Math.cos(camPitch);
       const sinP = Math.sin(camPitch);
       const cosY = Math.cos(camYaw);
-      const sinY = Math.sin(camYaw);
+      const sinY = Math.cos(Math.PI / 2 - camYaw)
+        ? Math.sin(camYaw)
+        : Math.sin(camYaw);
 
-      const eyeX = cosY * cosP * camDist;
-      const eyeY = sinP * camDist + 180;
-      const eyeZ = sinY * cosP * camDist;
+      const eyeX = Math.cos(camYaw) * cosP * camDist;
+      const eyeY = sinP * camDist + 200;
+      const eyeZ = Math.sin(camYaw) * cosP * camDist;
 
-      // ne uităm spre (0,0,0) – centrul discului HSV
+      // ne uităm spre centrul planului (0,0,0)
       p.camera(eyeX, eyeY, eyeZ, 0, 0, 0, 0, 1, 0);
-    }
-
-    function drawHueDisc(radius, steps) {
-      p.push();
-      // podea: disc HSV în XZ, la y = 0
-      p.rotateX(-p.HALF_PI); // punem discul în plan XZ
-      p.colorMode(p.HSB, 360, 100, 100);
-      p.noStroke();
-
-      const centerX = 0;
-      const centerY = 0;
-
-      for (let i = 0; i < steps; i++) {
-        const a0 = (i / steps) * p.TWO_PI;
-        const a1 = ((i + 1) / steps) * p.TWO_PI;
-
-        const x0 = Math.cos(a0) * radius;
-        const y0 = Math.sin(a0) * radius;
-        const x1 = Math.cos(a1) * radius;
-        const y1 = Math.sin(a1) * radius;
-
-        const hue = ((a0 * 180) / Math.PI + 360) % 360;
-
-        p.fill(hue, 100, 100); // culoare în funcție de unghi (Hue)
-
-        p.beginShape();
-        p.vertex(centerX, centerY, 0);
-        p.vertex(x0, y0, 0);
-        p.vertex(x1, y1, 0);
-        p.endShape(p.CLOSE);
-      }
-
-      p.colorMode(p.RGB, 255);
-      p.pop();
-    }
-
-    function drawSpotConeVisual() {
-      const coneHeight = 350;
-
-      p.push();
-      p.translate(spotPos.x, spotPos.y, spotPos.z);
-
-      // vrem ca axa conului (+Y local) să fie aproximativ dir
-      // simplificat: îl înclinăm puțin spre în jos și spre centru (0,0,0)
-      // ca demo vizual – nu e hard physically exact
-      const toCenter = p.createVector(0, 0, 0).sub(spotPos).normalize();
-      const yaw = Math.atan2(toCenter.x, toCenter.z);
-      const pitch = -Math.asin(toCenter.y);
-
-      p.rotateY(yaw);
-      p.rotateX(p.HALF_PI + pitch); // ca să îl orientăm spre disc
-
-      p.noFill();
-      p.stroke(255, 255, 255, 160);
-      p.strokeWeight(1);
-      const cutOff = p.radians(35);
-      const r = coneHeight * Math.tan(cutOff);
-      p.cone(r, coneHeight, 40, 1);
-
-      p.pop();
     }
 
     p.draw = function () {
       p.background(5);
-
       updateCamera();
 
-      // lumină ambientală ușoară
-      p.ambientLight(40);
+      // folosim shaderul custom pentru plan
+      p.shader(theShader);
 
-      // flare-ul "spotlight" – doar ca highlight vizual
-      p.pointLight(255, 255, 255, spotPos.x, spotPos.y, spotPos.z);
+      theShader.setUniform("uLightPos", [
+        lightLocal.x,
+        lightLocal.y,
+        lightLocal.z,
+      ]);
+      theShader.setUniform("uCutoffRad", p.radians(cutoffDeg));
+      theShader.setUniform("uRadius", PLANE_SIZE * 0.45);
 
-      // disc HSV pe "podea"
-      drawHueDisc(220, 120);
-
-      // spotlight vizibil: sferă + con
+      // plan în XY, la z = 0 (NU îl rotim)
       p.push();
-      p.translate(spotPos.x, spotPos.y, spotPos.z);
+      p.plane(PLANE_SIZE, PLANE_SIZE, 1, 1);
+      p.pop();
+
+      // oprim shaderul, restul se desenează normal
+      p.resetShader();
+
+      // spotlight vizibil – sferă
+      p.push();
+      p.translate(lightLocal.x, lightLocal.y, lightLocal.z);
       p.emissiveMaterial(255, 255, 200);
       p.sphere(12);
       p.pop();
 
-      drawSpotConeVisual();
+      // linie de la lumină la plan pe axa Z
+      p.push();
+      p.stroke(255, 255, 0, 200);
+      p.strokeWeight(2);
+      p.line(
+        lightLocal.x,
+        lightLocal.y,
+        lightLocal.z,
+        lightLocal.x,
+        lightLocal.y,
+        0
+      );
+      p.pop();
 
-      // mic text în colț
+      // text 2D explicativ
       p.push();
       p.resetMatrix();
-      p.translate(-W / 2 + 10, -H / 2 + 15);
+      p.translate(-W / 2 + 10, -H / 2 + 10);
       p.fill(255);
       p.textSize(12);
       p.textAlign(p.LEFT, p.TOP);
       p.text(
-        "Hue wheel în planul podelei (model HSV)\n" +
-          "Click dreapta + drag: orbită cameră",
+        "Spot-light pe plan (shader custom)\n" +
+          "Culoare pe plan = HSV:\n" +
+          "  Hue   = unghi față de centru\n" +
+          "  Value = angularAtt * radialAtt\n" +
+          "spot = dot(-L, light_dir), cutoff = " +
+          cutoffDeg.toFixed(0) +
+          "°\n" +
+          "RMB drag: orbită cameră",
         0,
         0
       );
