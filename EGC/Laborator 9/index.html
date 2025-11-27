@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Laborator 09 – Texturi OpenGL</title>
+
+    <!-- Reveal.js -->
+    <link rel="stylesheet" href="https://unpkg.com/reveal.js/dist/reveal.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/reveal.js/dist/theme/black.css"
+    />
+
+    <style>
+      .reveal .slide-number {
+        top: 10px; /* distanță de sus */
+        left: 10px; /* distanță de stânga */
+        right: auto; /* dezactivăm poziționarea dreapta */
+        bottom: auto; /* dezactivăm poziționarea jos */
+        transform: none; /* fără transformări */
+        color: #ffffff; /* culoare text */
+        font-family: monospace; /* font monospace */
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.3); /* fundal semi-transparent */
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      /* adăugăm # înaintea numărului */
+      .reveal .slide-number::before {
+        content: "#";
+      }
+
+      body {
+        font-family: monospace;
+      }
+      code,
+      pre {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
+      h1,
+      h2 {
+        margin: 0.5em 0;
+      }
+      p,
+      li {
+        margin: 0.3em 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- Slide 1 -->
+        <section>
+          <h1>Laborator 09 – Texturi OpenGL</h1>
+          <p>Autor: Bogdan Teacă</p>
+        </section>
+
+        <!-- Slide 2 -->
+        <section>
+          <h2>Introducere</h2>
+          <p>
+            Texturile permit adăugarea de detalii complexe obiectelor 3D fără a
+            crește numărul de vertecși.
+          </p>
+          <p>
+            O textură este o imagine 2D aplicată obiectului, pentru realism și
+            detalii vizuale.
+          </p>
+        </section>
+
+        <!-- Slide 3 -->
+        <section>
+          <h2>Maparea texturilor</h2>
+          <p>
+            Fiecare vertex are coordonate 2D <code>glm::vec2</code> în
+            intervalul [0,1]:
+          </p>
+          <ul>
+            <li>(0,0) = colțul stânga jos</li>
+            <li>(1,1) = colțul dreapta sus</li>
+          </ul>
+          <p>Texel = pixel din textură</p>
+        </section>
+
+        <!-- Slide 4 -->
+        <section>
+          <h2>Adăugarea unei texturi</h2>
+          <p>Pași principali:</p>
+          <ul>
+            <li>Încărcarea pixelilor imaginii</li>
+            <li>Generarea obiectului textura OpenGL</li>
+            <li>Legarea la unitatea de texturare</li>
+            <li>Încărcarea datelor cu <code>glTexImage2D</code></li>
+          </ul>
+        </section>
+
+        <!-- Slide 5 -->
+        <section>
+          <h2>Unități de texturare</h2>
+          <pre>
+glActiveTexture(GL_TEXTURE0 + unit);
+glBindTexture(GL_TEXTURE_2D, texture_id);
+glUniform1i(glGetUniformLocation(shader, "texture_1"), unit);
+      </pre
+          >
+          <p>OpenGL permite minim 16 unități (GL_TEXTURE0 – GL_TEXTURE15)</p>
+        </section>
+
+        <!-- Slide 6 -->
+        <section>
+          <h2>Shader pentru textură</h2>
+          <pre>
+#version 330
+uniform sampler2D texture_1;
+in vec2 texcoord;
+layout(location = 0) out vec4 out_color;
+void main() {
+  vec4 color = texture(texture_1, texcoord);
+  out_color = color;
+}
+      </pre
+          >
+        </section>
+
+        <!-- Slide 7 -->
+        <section>
+          <h2>Alpha discard / Opacitate</h2>
+          <pre>
+if(alpha < 0.5) {
+    discard;
+}
+      </pre
+          >
+          <p>Folosit pentru eliminarea fragmentelor invizibile (ex: frunze)</p>
+        </section>
+
+        <!-- Slide 8 -->
+        <section>
+          <h2>Filtrare</h2>
+          <ul>
+            <li><code>GL_NEAREST</code> – nearest neighbor</li>
+            <li><code>GL_LINEAR</code> – bilinear interpolation</li>
+          </ul>
+          <pre>
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      </pre
+          >
+        </section>
+
+        <!-- Slide orizontal 9 -->
+        <section>
+          <section>
+            <h2>Mipmaps</h2>
+            <p>
+              Reduc rezoluția texturilor pentru obiectele aflate la distanță.
+            </p>
+            <pre>
+glGenerateMipmap(GL_TEXTURE_2D);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  </pre
+            >
+          </section>
+          <!-- Vertical slides container -->
+          <section>
+            <h3>Demo p5.js</h3>
+            <div id="p5-mipmaps" style="width: 800px; height: 400px"></div>
+          </section>
+        </section>
+
+        <!-- Slide 10 -->
+        <section>
+          <h2>Cerințe laborator</h2>
+          <ul>
+            <li>Trimiterea corectă a texturilor în shader</li>
+            <li>Completarea coordonatelor pentru quad</li>
+            <li>Alpha discard în fragment shader</li>
+            <li>Generarea unei texturi random</li>
+            <li>Experimentarea filtrării și mipmaps</li>
+            <li>Mixarea a două texturi cu <code>mix()</code></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/reveal.js/dist/reveal.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="js/mipmaps-demo.js"></script>
+
+    <script>
+      Reveal.initialize({
+        hash: true,
+        slideNumber: true,
+        progress: false,
+      });
+
+      Reveal.on("slidechanged", (event) => {
+        const slide = event.currentSlide;
+        if (slide.querySelector("#p5-mipmaps") && !window.p5Instance) {
+          startMipmapsDemo();
+        }
+
+        if (event.currentSlide.querySelector("section")) {
+          Reveal.setState({
+            indexv: 0,
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,12 +1,260 @@
-<!doctype html>
-<html>
-<head><title>Prezentări</title></head>
-<body>
-  <h1>Prezentări Reveal.js</h1>
-  <ul>
-    <li><a href="SPG/Laborator8/index.html">Prezentare 1</a></li>
-    <li><a href="prezentare2/">Prezentare 2</a></li>
-    <li><a href="prezentare3/">Prezentare 3</a></li>
-  </ul>
-</body>
+<!DOCTYPE html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prezentări Laborator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style>
+      :root {
+        --bg: #0b0c10;
+        --bg-card: #151821;
+        --accent: #66fcf1;
+        --accent-soft: rgba(102, 252, 241, 0.1);
+        --text-main: #ffffff;
+        --text-muted: #c5c6c7;
+        --border-subtle: rgba(255, 255, 255, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(
+          circle at top,
+          #1f2833 0,
+          #0b0c10 55%,
+          #050608 100%
+        );
+        color: var(--text-main);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      .page {
+        width: 100%;
+        max-width: 960px;
+        padding: 32px 24px 40px;
+      }
+
+      header {
+        margin-bottom: 32px;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 16px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+        letter-spacing: 0.04em;
+      }
+
+      .subtitle {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+      }
+
+      .tagline {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        opacity: 0.9;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+      }
+
+      .category-card {
+        background: var(--bg-card);
+        border-radius: 14px;
+        border: 1px solid var(--border-subtle);
+        padding: 18px 18px 14px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .category-card::before {
+        content: "";
+        position: absolute;
+        inset: -40%;
+        background: radial-gradient(
+          circle at top left,
+          var(--accent-soft),
+          transparent 65%
+        );
+        opacity: 0.7;
+        pointer-events: none;
+      }
+
+      .category-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .category-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .category-tag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        background: rgba(102, 252, 241, 0.06);
+      }
+
+      .category-desc {
+        margin: 0 0 10px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        position: relative;
+        z-index: 1;
+      }
+
+      .labs-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+      }
+
+      .labs-list li + li {
+        margin-top: 4px;
+      }
+
+      .lab-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.88rem;
+        color: var(--accent);
+        text-decoration: none;
+        padding: 3px 0;
+        border-radius: 6px;
+        transition: background 0.18s ease, transform 0.12s ease,
+          color 0.18s ease;
+      }
+
+      .lab-link span.lab-name {
+        font-weight: 500;
+      }
+
+      .lab-link span.lab-label {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+
+      .lab-link::before {
+        content: "›";
+        font-size: 0.9rem;
+        opacity: 0.8;
+        transform: translateY(1px);
+      }
+
+      .lab-link:hover {
+        background: rgba(102, 252, 241, 0.06);
+        transform: translateX(2px);
+        color: #ffffff;
+      }
+
+      footer {
+        margin-top: 26px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-align: right;
+        opacity: 0.8;
+      }
+
+      @media (max-width: 600px) {
+        .page {
+          padding: 20px 16px 28px;
+        }
+        h1 {
+          font-size: 1.6rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <header>
+        <h1>Prezentări laborator</h1>
+        <p class="subtitle">Reveal.js &nbsp;•&nbsp; EGC &amp; SPG</p>
+        <p class="tagline">
+          Materiale interactive pentru cursuri și laboratoare.
+        </p>
+      </header>
+
+      <main class="grid">
+        <!-- EGC -->
+        <section class="category-card">
+          <div class="category-header">
+            <div class="category-title">EGC</div>
+            <div class="category-tag">Grafica pe calculator</div>
+          </div>
+          <p class="category-desc">
+            Laboratoare de grafică: modele de iluminare, shading, pipeline
+            grafic.
+          </p>
+          <ul class="labs-list">
+            <li>
+              <a class="lab-link" href="EGC/Laborator 8/index.html">
+                <span class="lab-name">Laborator 8</span>
+                <span class="lab-label">• Iluminare Phong, spot-light</span>
+              </a>
+            </li>
+            <li>
+              <a class="lab-link" href="EGC/Laborator 9/index.html">
+                <span class="lab-name">Laborator 9</span>
+                <span class="lab-label">• Multiple lights, shadere</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+
+        <!-- SPG -->
+        <section class="category-card">
+          <div class="category-header">
+            <div class="category-title">SPG</div>
+            <div class="category-tag">Simulare și procesare grafică</div>
+          </div>
+          <p class="category-desc">
+            Laboratoare de simulare, procesare și tehnici avansate de randare.
+          </p>
+          <ul class="labs-list">
+            <!-- Pune aici laburile reale când le ai -->
+            <li>
+              <span class="lab-link" style="pointer-events: none; opacity: 0.6">
+                <span class="lab-name">În curând</span>
+                <span class="lab-label">• materiale în pregătire</span>
+              </span>
+            </li>
+          </ul>
+        </section>
+      </main>
+
+      <footer>Actualizat pentru semestrul curent.</footer>
+    </div>
+  </body>
 </html>
